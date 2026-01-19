@@ -15,6 +15,9 @@ const COLLECTIONS = {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthState();
     
+    // Popola i select delle immagini
+    populateImageSelects();
+    
     // Event listeners per login
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     
@@ -204,8 +207,9 @@ async function handleFormSubmit(e) {
         const weight = parseFloat(item.querySelector('.exercise-weight').value) || 0;
         const notes = item.querySelector('.exercise-notes').value.trim();
         
-        const imgPreview = item.querySelector('.image-preview img');
-        const image = imgPreview && imgPreview.src && imgPreview.src.startsWith('data:') ? imgPreview.src : null;
+        // Ottieni l'immagine selezionata dal select
+        const imageSelect = item.querySelector('.exercise-image-select');
+        const image = imageSelect ? imageSelect.value : '';
         
         exercises.push({ name, sets, reps, weight, notes, image });
     });
@@ -243,12 +247,10 @@ function resetExercisesList() {
     
     const firstExercise = exercisesList.querySelector('.exercise-item');
     if (firstExercise) {
-        const preview = firstExercise.querySelector('.image-preview');
-        const img = preview.querySelector('img');
-        const fileInput = firstExercise.querySelector('.exercise-image');
-        img.src = '';
-        preview.style.display = 'none';
-        fileInput.style.display = 'block';
+        const imageSelect = firstExercise.querySelector('.exercise-image-select');
+        const previewBox = firstExercise.querySelector('.image-preview-box');
+        if (imageSelect) imageSelect.value = '';
+        if (previewBox) previewBox.style.display = 'none';
     }
 }
 
@@ -263,34 +265,51 @@ function displayWorkouts() {
     
     container.innerHTML = workouts.map(workout => `
         <div class="workout-card">
-            <h3>${workout.name}</h3>
-            <p style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">
-                Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
-            </p>
-            <div class="exercise-list">
-                ${workout.exercises.map(exercise => `
-                    <div class="exercise-entry">
-                        ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}"></div>` : ''}
-                        <div class="exercise-info">
-                            <strong>${exercise.name}</strong>
-                            <div class="exercise-details">
-                                ${exercise.sets} serie × ${exercise.reps} ripetizioni
-                                ${exercise.weight > 0 ? ` • ${exercise.weight} kg` : ''}
-                            </div>
-                            ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
-                        </div>
+            <div class="workout-header" onclick="toggleWorkout(this)">
+                <div>
+                    <h3>${workout.name}</h3>
+                    <div class="workout-date">
+                        Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
                     </div>
-                `).join('')}
+                </div>
+                <div class="expand-icon">▼</div>
             </div>
-            <div class="workout-actions">
-                <button class="btn-delete" onclick="deleteWorkout('${workout.id}')">Elimina</button>
+            <div class="workout-content">
+                <div class="workout-body">
+                    <div class="exercise-list">
+                        ${workout.exercises.map(exercise => `
+                            <div class="exercise-entry">
+                                ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                                <div class="exercise-info">
+                                    <strong>${exercise.name}</strong>
+                                    <div class="exercise-details">
+                                        ${exercise.sets} serie × ${exercise.reps} ripetizioni
+                                        ${exercise.weight > 0 ? ` • ${exercise.weight} kg` : ''}
+                                    </div>
+                                    ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="workout-actions">
+                    <button class="btn-delete" onclick="deleteWorkout('${workout.id}')">Elimina</button>
+                </div>
             </div>
         </div>
     `).join('');
 }
 
+// Toggle espansione scheda
+function toggleWorkout(header) {
+    const card = header.closest('.workout-card');
+    card.classList.toggle('expanded');
+}
+
 // Elimina scheda
 async function deleteWorkout(id) {
+    event.stopPropagation(); // Previeni chiusura card
+    
     if (!confirm('Sei sicuro di voler eliminare questa scheda?')) return;
     
     try {
@@ -332,14 +351,13 @@ function addExerciseField() {
             <label>Note:</label>
             <input type="text" class="exercise-notes" placeholder="Note aggiuntive (opzionale)">
         </div>
-        <div class="form-group image-upload-group">
+        <div class="form-group image-select-group">
             <label>Immagine Esercizio:</label>
-            <div class="image-upload-container">
-                <input type="file" class="exercise-image" accept="image/*" onchange="previewImage(this)">
-                <div class="image-preview" style="display: none;">
-                    <img src="" alt="Anteprima">
-                    <button type="button" class="btn-remove-image" onclick="removeImage(this)">✕ Rimuovi</button>
-                </div>
+            <select class="exercise-image-select" onchange="updateImagePreview(this)">
+                ${generateImageOptions()}
+            </select>
+            <div class="image-preview-box" style="display: none;">
+                <img src="" alt="Anteprima" class="preview-img">
             </div>
         </div>
     `;
@@ -358,34 +376,34 @@ function removeExercise(button) {
     }
 }
 
-// Anteprima immagine
-function previewImage(input) {
-    const exerciseItem = input.closest('.exercise-item');
-    const preview = exerciseItem.querySelector('.image-preview');
-    const img = preview.querySelector('img');
-    
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            img.src = e.target.result;
-            preview.style.display = 'block';
-            input.style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+// Popola tutti i select delle immagini
+function populateImageSelects() {
+    const selects = document.querySelectorAll('.exercise-image-select');
+    selects.forEach(select => {
+        select.innerHTML = generateImageOptions();
+    });
 }
 
-// Rimuovi immagine
-function removeImage(button) {
-    const exerciseItem = button.closest('.exercise-item');
-    const preview = exerciseItem.querySelector('.image-preview');
-    const img = preview.querySelector('img');
-    const fileInput = exerciseItem.querySelector('.exercise-image');
+// Genera le opzioni del select immagini
+function generateImageOptions() {
+    return exerciseImages.map((img, index) => 
+        `<option value="${img.path}">${img.name}</option>`
+    ).join('');
+}
+
+// Aggiorna anteprima immagine quando cambia la selezione
+function updateImagePreview(select) {
+    const exerciseItem = select.closest('.exercise-item');
+    const previewBox = exerciseItem.querySelector('.image-preview-box');
+    const img = previewBox.querySelector('.preview-img');
     
-    img.src = '';
-    fileInput.value = '';
-    preview.style.display = 'none';
-    fileInput.style.display = 'block';
+    if (select.value) {
+        img.src = select.value;
+        previewBox.style.display = 'block';
+    } else {
+        img.src = '';
+        previewBox.style.display = 'none';
+    }
 }
 
 // Gestione tab
@@ -531,24 +549,33 @@ function displayClientWorkouts(workoutsList) {
     
     container.innerHTML = workoutsList.map(workout => `
         <div class="workout-card">
-            <h3>${workout.name}</h3>
-            <p style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">
-                Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
-            </p>
-            <div class="exercise-list">
-                ${workout.exercises.map(exercise => `
-                    <div class="exercise-entry">
-                        ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}"></div>` : ''}
-                        <div class="exercise-info">
-                            <strong>${exercise.name}</strong>
-                            <div class="exercise-details">
-                                ${exercise.sets} serie × ${exercise.reps} ripetizioni
-                                ${exercise.weight > 0 ? ` • ${exercise.weight} kg` : ''}
-                            </div>
-                            ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
-                        </div>
+            <div class="workout-header" onclick="toggleWorkout(this)">
+                <div>
+                    <h3>${workout.name}</h3>
+                    <div class="workout-date">
+                        Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
                     </div>
-                `).join('')}
+                </div>
+                <div class="expand-icon">▼</div>
+            </div>
+            <div class="workout-content">
+                <div class="workout-body">
+                    <div class="exercise-list">
+                        ${workout.exercises.map(exercise => `
+                            <div class="exercise-entry">
+                                ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                                <div class="exercise-info">
+                                    <strong>${exercise.name}</strong>
+                                    <div class="exercise-details">
+                                        ${exercise.sets} serie × ${exercise.reps} ripetizioni
+                                        ${exercise.weight > 0 ? ` • ${exercise.weight} kg` : ''}
+                                    </div>
+                                    ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
         </div>
     `).join('');

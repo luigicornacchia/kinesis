@@ -195,21 +195,67 @@ h3 {
 
 .workout-card {
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 15px;
+    padding: 0;
     margin-bottom: 20px;
-    background: #f9f9f9;
-    transition: transform 0.2s;
+    background: white;
+    overflow: hidden;
+    transition: all 0.3s;
 }
 
 .workout-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
-.workout-card h3 {
-    color: #3CADD4;
-    margin-bottom: 15px;
+.workout-header {
+    padding: 20px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #3CADD4 0%, #2A8FB5 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.workout-header:hover {
+    background: linear-gradient(135deg, #2A8FB5 0%, #1F7A9D 100%);
+}
+
+.workout-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.workout-date {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.expand-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s;
+}
+
+.workout-card.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.workout-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.workout-card.expanded .workout-content {
+    max-height: 5000px;
+    transition: max-height 0.5s ease-in;
+}
+
+.workout-body {
+    padding: 20px;
 }
 
 .exercise-list {
@@ -217,11 +263,14 @@ h3 {
 }
 
 .exercise-entry {
-    background: white;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
     border-left: 4px solid #3CADD4;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
 }
 
 .exercise-entry strong {
@@ -242,82 +291,65 @@ h3 {
     margin-top: 5px;
 }
 
-.image-upload-group {
+.image-select-group {
     margin-top: 10px;
 }
 
-.image-upload-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.exercise-image {
-    padding: 8px;
-    border: 2px dashed #3CADD4;
+.exercise-image-select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
     border-radius: 8px;
+    font-size: 1rem;
+    background: white;
     cursor: pointer;
-    font-size: 0.9rem;
+    transition: border-color 0.3s;
 }
 
-.image-preview {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.exercise-image-select:focus {
+    outline: none;
+    border-color: #3CADD4;
 }
 
-.image-preview img {
-    max-width: 200px;
-    max-height: 200px;
+.image-preview-box {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.image-preview-box img {
+    max-width: 100%;
+    max-height: 250px;
     border-radius: 8px;
-    object-fit: cover;
+    object-fit: contain;
     border: 2px solid #3CADD4;
-}
-
-.btn-remove-image {
-    background: #ff6b6b;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: background 0.3s;
-    width: fit-content;
-}
-
-.btn-remove-image:hover {
-    background: #ff5252;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .exercise-image-display {
-    margin-bottom: 10px;
+    flex-shrink: 0;
+    width: 150px;
+    height: 150px;
 }
 
 .exercise-image-display img {
     width: 100%;
-    max-width: 300px;
-    height: auto;
+    height: 100%;
     border-radius: 8px;
     object-fit: cover;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.exercise-entry {
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .exercise-info {
     flex: 1;
+    min-width: 0;
 }
 
 .workout-actions {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
+    padding: 15px 20px;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
 }
 
 .empty-state {
@@ -584,6 +616,15 @@ select:focus {
 
     header h1 {
         font-size: 2rem;
+    }
+    
+    .exercise-entry {
+        flex-direction: column;
+    }
+    
+    .exercise-image-display {
+        width: 100%;
+        height: 200px;
     }
 }
 

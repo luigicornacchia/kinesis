@@ -88,14 +88,13 @@
                                     <label>Note:</label>
                                     <input type="text" class="exercise-notes" placeholder="Note aggiuntive (opzionale)">
                                 </div>
-                                <div class="form-group image-upload-group">
+                                <div class="form-group image-select-group">
                                     <label>Immagine Esercizio:</label>
-                                    <div class="image-upload-container">
-                                        <input type="file" class="exercise-image" accept="image/*" onchange="previewImage(this)">
-                                        <div class="image-preview" style="display: none;">
-                                            <img src="" alt="Anteprima">
-                                            <button type="button" class="btn-remove-image" onclick="removeImage(this)">✕ Rimuovi</button>
-                                        </div>
+                                    <select class="exercise-image-select" onchange="updateImagePreview(this)">
+                                        <!-- Opzioni popolate via JS -->
+                                    </select>
+                                    <div class="image-preview-box" style="display: none;">
+                                        <img src="" alt="Anteprima" class="preview-img">
                                     </div>
                                 </div>
                             </div>
@@ -189,6 +188,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <!-- App Scripts -->
+    <script src="exercise-images.js"></script>
     <script src="firebase-config.js"></script>
     <script src="app-firebase.js"></script>
 </body>
