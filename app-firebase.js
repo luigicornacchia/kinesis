@@ -425,7 +425,7 @@ async function populateClientSelect() {
         clientSelect.innerHTML = '<option value="">-- Scegli un cliente --</option>';
         clients.forEach(client => {
             const option = document.createElement('option');
-            option.value = client.uid;
+            option.value = client.username; // Usa username invece di UID
             option.textContent = client.name;
             clientSelect.appendChild(option);
         });
@@ -450,10 +450,10 @@ function populateWorkoutSelect() {
 async function handleSendWorkout(e) {
     e.preventDefault();
     
-    const clientId = document.getElementById('clientSelect').value;
+    const clientUsername = document.getElementById('clientSelect').value;
     const workoutId = document.getElementById('workoutSelect').value;
     
-    if (!clientId || !workoutId) {
+    if (!clientUsername || !workoutId) {
         alert('Seleziona sia il cliente che la scheda!');
         return;
     }
@@ -461,7 +461,7 @@ async function handleSendWorkout(e) {
     try {
         // Verifica se già assegnata
         const existingAssignment = await db.collection(COLLECTIONS.CLIENT_WORKOUTS)
-            .where('clientId', '==', clientId)
+            .where('clientUsername', '==', clientUsername)
             .where('workoutId', '==', workoutId)
             .get();
         
@@ -470,14 +470,14 @@ async function handleSendWorkout(e) {
             return;
         }
         
-        // Crea assegnazione
+        // Crea assegnazione usando username
         await db.collection(COLLECTIONS.CLIENT_WORKOUTS).add({
-            clientId: clientId,
+            clientUsername: clientUsername,
             workoutId: workoutId,
             assignedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        const client = clients.find(c => c.uid === clientId);
+        const client = clients.find(c => c.username === clientUsername);
         const workout = workouts.find(w => w.id === workoutId);
         
         alert(`Scheda "${workout.name}" inviata a ${client.name}!`);
@@ -492,10 +492,14 @@ async function handleSendWorkout(e) {
 // Carica schede cliente
 async function loadClientWorkouts() {
     try {
-        // Ottieni assegnazioni per questo cliente
+        console.log('Caricamento schede per:', currentUser.username);
+        
+        // Ottieni assegnazioni per questo cliente usando username
         const assignmentsSnapshot = await db.collection(COLLECTIONS.CLIENT_WORKOUTS)
-            .where('clientId', '==', currentUser.uid)
+            .where('clientUsername', '==', currentUser.username)
             .get();
+        
+        console.log('Assegnazioni trovate:', assignmentsSnapshot.size);
         
         const workoutIds = assignmentsSnapshot.docs.map(doc => doc.data().workoutId);
         
@@ -651,9 +655,9 @@ async function deleteAccount(userId) {
         // Elimina utente da Firestore
         await db.collection(COLLECTIONS.USERS).doc(userId).delete();
         
-        // Elimina assegnazioni schede
+        // Elimina assegnazioni schede usando username
         const assignments = await db.collection(COLLECTIONS.CLIENT_WORKOUTS)
-            .where('clientId', '==', userId)
+            .where('clientUsername', '==', user.username)
             .get();
         
         const deletePromises = assignments.docs.map(doc => doc.ref.delete());
