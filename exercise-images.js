@@ -3,8 +3,8 @@
 
 const exerciseImages = [
     { name: 'Nessuna immagine', path: '' },
-    { name: 'Panca Piana', path: 'images/exercises/panca-piana.jpg' },
-    { name: 'Squat', path: 'images/exercises/squat.jpg' },
+    { name: 'Panca Piana', path: 'images/exercises/panca-piana.jpeg' },
+    { name: 'Squat', path: 'images/exercises/squat.jpeg' },
     { name: 'Stacco', path: 'images/exercises/stacco.jpg' },
     { name: 'Military Press', path: 'images/exercises/military-press.jpg' },
     { name: 'Trazioni', path: 'images/exercises/trazioni.jpg' },
