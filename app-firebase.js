@@ -53,46 +53,51 @@ async function handleLogin(e) {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
+    console.log('Tentativo login:', username);
+    
     try {
-        // Cerca utente per username
+        // Login con Firebase Auth usando email fittizia
+        const email = `${username}@kinesis.local`;
+        
+        console.log('Tentativo auth con email:', email);
+        
+        // Prova a fare login
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const firebaseUser = userCredential.user;
+        
+        console.log('Auth riuscita, UID:', firebaseUser.uid);
+        
+        // Cerca utente in Firestore
         const usersSnapshot = await db.collection(COLLECTIONS.USERS)
             .where('username', '==', username)
             .get();
         
         if (usersSnapshot.empty) {
-            alert('Username non trovato!');
+            console.log('Utente non trovato in Firestore');
+            alert('Configurazione utente non trovata. Contatta l\'amministratore.');
+            await auth.signOut();
             return;
         }
         
         const userDoc = usersSnapshot.docs[0];
         const userData = userDoc.data();
         
-        // Verifica password (in produzione usare hash!)
-        if (userData.password !== password) {
-            alert('Password errata!');
-            return;
-        }
+        console.log('Dati utente caricati:', userData);
         
-        // Login con Firebase Auth usando email fittizia
-        const email = `${username}@kinesis.local`;
+        currentUser = { uid: firebaseUser.uid, ...userData };
         
-        try {
-            // Prova a fare login
-            await auth.signInWithEmailAndPassword(email, password);
-        } catch (error) {
-            if (error.code === 'auth/user-not-found') {
-                // Se l'utente non esiste in Auth, crealo
-                await auth.createUserWithEmailAndPassword(email, password);
-            } else {
-                throw error;
-            }
-        }
-        
-        currentUser = { uid: userDoc.id, ...userData };
+        // Il cambio di pagina sarà gestito da onAuthStateChanged
         
     } catch (error) {
-        console.error('Errore login:', error);
-        alert('Errore durante il login: ' + error.message);
+        console.error('Errore login completo:', error);
+        
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            alert('Username o password errati!');
+        } else if (error.code === 'auth/invalid-email') {
+            alert('Email non valida!');
+        } else {
+            alert('Errore durante il login: ' + error.message);
+        }
     }
 }
 
