@@ -347,32 +347,9 @@ function addExerciseField() {
     const exerciseItem = document.createElement('div');
     exerciseItem.className = 'exercise-item';
     exerciseItem.innerHTML = `
-        <div class="form-row">
-            <div class="form-group">
-                <label>Nome Esercizio:</label>
-                <input type="text" class="exercise-name" placeholder="es. Panca piana" required>
-            </div>
-            <div class="form-group">
-                <label>Serie:</label>
-                <input type="number" class="exercise-sets" placeholder="3" min="1" required>
-            </div>
-            <div class="form-group">
-                <label>Ripetizioni:</label>
-                <input type="number" class="exercise-reps" placeholder="10" min="1" required>
-            </div>
-            <div class="form-group">
-                <label>Peso (kg):</label>
-                <input type="number" class="exercise-weight" placeholder="50" min="0" step="0.5">
-            </div>
-            <button type="button" class="btn-remove" onclick="removeExercise(this)">✕</button>
-        </div>
-        <div class="form-group">
-            <label>Note:</label>
-            <input type="text" class="exercise-notes" placeholder="Note aggiuntive (opzionale)">
-        </div>
         <div class="form-group image-search-group">
             <label>Cerca Esercizio:</label>
-            <input type="text" class="exercise-search" placeholder="Cerca esercizio..." autocomplete="off" onkeyup="handleExerciseSearch(this)" onfocus="handleExerciseSearch(this)">
+            <input type="text" class="exercise-search" placeholder="Cerca esercizio... (es. panca, squat, crunch)" autocomplete="off">
             <div class="search-results" style="display: none;"></div>
             <input type="hidden" class="exercise-image-path">
         </div>
@@ -394,8 +371,21 @@ function addExerciseField() {
             </div>
             <button type="button" class="btn-remove" onclick="removeExercise(this)">✕</button>
         </div>
+        <div class="form-group">
+            <label>Note:</label>
+            <input type="text" class="exercise-notes" placeholder="Note aggiuntive (opzionale)">
+        </div>
     `;
     exercisesList.appendChild(exerciseItem);
+    
+    // Setup ricerca per il nuovo campo
+    const searchInput = exerciseItem.querySelector('.exercise-search');
+    searchInput.addEventListener('keyup', function() {
+        handleExerciseSearch(this);
+    });
+    searchInput.addEventListener('focus', function() {
+        handleExerciseSearch(this);
+    });
 }
 
 // Rimuovi esercizio
