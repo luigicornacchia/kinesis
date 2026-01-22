@@ -3,6 +3,14 @@ let currentUser = null;
 let workouts = [];
 let clients = [];
 let clientWorkouts = {};
+let workoutState = {
+    name: "",
+    days: {
+        1: []
+    },
+    currentDay: 1
+};
+
 
 // Collezioni Firebase
 const COLLECTIONS = {
@@ -204,49 +212,36 @@ async function loadWorkouts() {
 // Salva scheda
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
-    const workoutName = document.getElementById('workoutName').value.trim();
-    const exerciseItems = document.querySelectorAll('.exercise-item');
-    
-    const exercises = [];
-    exerciseItems.forEach(item => {
-        const sets = parseInt(item.querySelector('.exercise-sets').value);
-        const reps = parseInt(item.querySelector('.exercise-reps').value);
-        const rest = parseInt(item.querySelector('.exercise-rest').value) || 60;
-        const notes = item.querySelector('.exercise-notes').value.trim();
-        
-        // Ottieni l'immagine e il nome dall'esercizio selezionato
-        const imagePath = item.querySelector('.exercise-image-path').value;
-        const searchInput = item.querySelector('.exercise-search');
-        const exerciseName = searchInput ? searchInput.getAttribute('data-selected-name') || searchInput.value.trim() : '';
-        
-        if (!exerciseName) {
-            alert('Seleziona un esercizio dalla ricerca!');
-            return;
-        }
-        
-        exercises.push({ name: exerciseName, sets, reps, rest, notes, image: imagePath });
-    });
-    
-    const workout = {
-        name: workoutName,
-        exercises: exercises,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        createdBy: currentUser.uid
+    saveCurrentDayExercises();
+
+    const workoutData = {
+        name: document.getElementById('workoutName').value.trim(),
+        days: workoutState.days,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
     try {
-        await db.collection(COLLECTIONS.WORKOUTS).add(workout);
-        alert('Scheda salvata con successo!');
+        if (workoutState.id) {
+            // MODIFICA ESISTENTE
+            await db.collection(COLLECTIONS.WORKOUTS).doc(workoutState.id).update(workoutData);
+            alert('Scheda aggiornata con successo!');
+        } else {
+            // CREAZIONE NUOVA
+            workoutData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            workoutData.createdBy = currentUser.uid;
+            await db.collection(COLLECTIONS.WORKOUTS).add(workoutData);
+            alert('Nuova scheda salvata!');
+        }
         
-        // Reset form
+        // Reset Totale
+        workoutState = { id: null, name: "", days: { 1: [] }, currentDay: 1 };
         document.getElementById('workoutForm').reset();
+        document.querySelector('#workoutForm .btn-primary').textContent = "Salva Scheda";
+        renderDayTabs();
         resetExercisesList();
-        
-        // Ricarica schede
         await loadWorkouts();
     } catch (error) {
-        console.error('Errore salvataggio scheda:', error);
+        console.error('Errore:', error);
         alert('Errore durante il salvataggio');
     }
 }
@@ -276,43 +271,39 @@ function resetExercisesList() {
 // Visualizza schede
 function displayWorkouts() {
     const container = document.getElementById('workoutsContainer');
-    
-    if (workouts.length === 0) {
-        container.innerHTML = '<p class="empty-state">Nessuna scheda creata. Crea la tua prima scheda!</p>';
-        return;
-    }
-    
     container.innerHTML = workouts.map(workout => `
         <div class="workout-card">
             <div class="workout-header" onclick="toggleWorkout(this)">
-                <div>
-                    <h3>${workout.name}</h3>
-                    <div class="workout-date">
-                        Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
-                    </div>
-                </div>
+                <h3>${workout.name}</h3>
                 <div class="expand-icon">▼</div>
             </div>
             <div class="workout-content">
                 <div class="workout-body">
-                    <div class="exercise-list">
-                        ${workout.exercises.map(exercise => `
-                            <div class="exercise-entry">
-                                ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                                <div class="exercise-info">
-                                    <strong>${exercise.name}</strong>
-                            <div class="exercise-details">
-                                ${exercise.sets} serie × ${exercise.reps} ripetizioni
-                                ${exercise.rest ? ` • Recupero: ${exercise.rest}s` : ''}
-                            </div>
-                                    ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
+                    ${Object.entries(workout.days || {}).map(([day, exercises]) => `
+                        <div class="day-group">
+                            <h4 style="color: #3CADD4; margin: 15px 0 10px 0;">Giorno ${day}</h4>
+                            ${exercises.map(ex => `
+                                <div class="exercise-entry">
+                                    ${ex.image ? `
+                                        <div class="exercise-image-display">
+                                            <img src="${ex.image}" alt="${ex.name}">
+                                        </div>
+                                    ` : ''}
+                                    <div class="exercise-info">
+                                        <strong>${ex.name}</strong>
+                                        <div class="exercise-details">
+                                            ${ex.sets}x${ex.reps} — Rec: ${ex.rest}s
+                                        </div>
+                                        ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ''}
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="workout-actions">
-                    <button class="btn-delete" onclick="deleteWorkout('${workout.id}')">Elimina</button>
+                            `).join('')}
+                        </div>
+                    `).join('<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">')}
+                        <div class="workout-actions" style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn-edit" onclick="editWorkout('${workout.id}')">Modifica</button>
+                            <button class="btn-delete" onclick="deleteWorkout('${workout.id}')">Elimina</button>
+                        </div>
                 </div>
             </div>
         </div>
@@ -612,34 +603,25 @@ async function loadClientWorkouts() {
 function displayClientWorkouts(workoutsList) {
     const container = document.getElementById('clientWorkoutsContainer');
     
+    if (workoutsList.length === 0) {
+        container.innerHTML = '<p class="empty-state">Nessuna scheda ricevuta. Attendi che il tuo trainer te ne invii una!</p>';
+        return;
+    }
+    
     container.innerHTML = workoutsList.map(workout => `
         <div class="workout-card">
             <div class="workout-header" onclick="toggleWorkout(this)">
                 <div>
                     <h3>${workout.name}</h3>
                     <div class="workout-date">
-                        Creata il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
+                        Ricevuta il: ${workout.createdAt ? new Date(workout.createdAt.toDate()).toLocaleDateString('it-IT') : 'N/A'}
                     </div>
                 </div>
                 <div class="expand-icon">▼</div>
             </div>
             <div class="workout-content">
                 <div class="workout-body">
-                    <div class="exercise-list">
-                        ${workout.exercises.map(exercise => `
-                            <div class="exercise-entry">
-                                ${exercise.image ? `<div class="exercise-image-display"><img src="${exercise.image}" alt="${exercise.name}" onerror="this.parentElement.style.display='none'"></div>` : ''}
-                                <div class="exercise-info">
-                                    <strong>${exercise.name}</strong>
-                                    <div class="exercise-details">
-                                        ${exercise.sets} serie × ${exercise.reps} ripetizioni
-                                        ${exercise.rest ? ` • Recupero: ${exercise.rest}s` : ''}
-                                    </div>
-                                    ${exercise.notes ? `<div class="exercise-notes">Note: ${exercise.notes}</div>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                    ${renderWorkoutDaysHTML(workout)}
                 </div>
             </div>
         </div>
@@ -767,4 +749,157 @@ async function deleteAccount(userId) {
         console.error('Errore eliminazione account:', error);
         alert('Errore durante l\'eliminazione: ' + error.message);
     }
+}
+
+// Salva gli esercizi scritti nel form dentro workoutState prima di cambiare giorno
+function saveCurrentDayExercises() {
+    const exerciseItems = document.querySelectorAll('.exercise-item');
+    const exercises = [];
+    
+    exerciseItems.forEach(item => {
+        const name = item.querySelector('.exercise-search').value;
+        if (name) {
+            exercises.push({
+                name: name,
+                sets: item.querySelector('.exercise-sets').value,
+                reps: item.querySelector('.exercise-reps').value,
+                rest: item.querySelector('.exercise-rest').value,
+                notes: item.querySelector('.exercise-notes').value,
+                image: item.querySelector('.exercise-image-path').value
+            });
+        }
+    });
+    
+    workoutState.days[workoutState.currentDay] = exercises;
+}
+
+// Cambia il giorno visualizzato
+function switchDay(dayNumber) {
+    saveCurrentDayExercises();
+    workoutState.currentDay = parseInt(dayNumber);
+    
+    document.querySelectorAll('.day-tab').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.day) === workoutState.currentDay);
+    });
+    document.getElementById('currentDayLabel').textContent = `Esercizi - Giorno ${workoutState.currentDay}`;
+    
+    // Invece di resetExercisesList(), usa la nostra nuova funzione:
+    loadExercisesForCurrentDay();
+}
+
+// Aggiunge un nuovo giorno (Massimo 5)
+document.getElementById('addDayBtn').addEventListener('click', () => {
+    const dayCount = Object.keys(workoutState.days).length;
+    if (dayCount >= 5) {
+        alert('Puoi creare al massimo 5 giorni di allenamento');
+        return;
+    }
+
+    const nextDay = dayCount + 1;
+    workoutState.days[nextDay] = [];
+    
+    renderDayTabs();
+    switchDay(nextDay);
+});
+
+function renderDayTabs() {
+    const container = document.getElementById('daysTabsContainer');
+    container.innerHTML = '';
+    Object.keys(workoutState.days).forEach(day => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'day-tab' + (parseInt(day) === workoutState.currentDay ? ' active' : '');
+        btn.dataset.day = day;
+        btn.textContent = `Giorno ${day}`;
+        btn.onclick = () => switchDay(day);
+        container.appendChild(btn);
+    });
+}
+
+function renderWorkoutDaysHTML(workout) {
+    if (!workout.days) return '<p>Nessun esercizio presente.</p>';
+
+    return Object.entries(workout.days).map(([day, exercises]) => `
+        <div class="day-group" style="margin-bottom: 30px;">
+            <h4 style="color: #3CADD4; border-bottom: 2px solid #3CADD4; padding-bottom: 5px; margin-bottom: 15px;">Giorno ${day}</h4>
+            ${exercises.map(ex => `
+                <div class="exercise-entry">
+                    ${ex.image ? `
+                        <div class="exercise-image-display">
+                            <img src="${ex.image}" alt="${ex.name}" onclick="window.open(this.src, '_blank')">
+                        </div>
+                    ` : ''}
+                    <div class="exercise-info">
+                        <strong>${ex.name}</strong>
+                        <div class="exercise-details">
+                            <span style="font-size: 1.1rem; color: #333;">${ex.sets} serie</span> x <span style="font-size: 1.1rem; color: #333;">${ex.reps} rep</span>
+                        </div>
+                        <div class="exercise-rest">Recupero: ${ex.rest}s</div>
+                        ${ex.notes ? `<div class="exercise-notes">Note: ${ex.notes}</div>` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
+
+async function editWorkout(id) {
+    // Evita che il click chiuda o apra la card
+    event.stopPropagation();
+    
+    const workout = workouts.find(w => w.id === id);
+    if (!workout) return;
+
+    // Reset dello stato con i dati esistenti
+    workoutState.id = id;
+    workoutState.name = workout.name;
+    workoutState.days = JSON.parse(JSON.stringify(workout.days)); // Copia profonda
+    workoutState.currentDay = 1;
+
+    // Popola il nome nel form
+    document.getElementById('workoutName').value = workout.name;
+
+    // Cambia il testo del bottone di salvataggio
+    const submitBtn = document.querySelector('#workoutForm .btn-primary');
+    submitBtn.textContent = "Aggiorna Scheda";
+
+    // Mostra il tab di creazione
+    showTab('create');
+    
+    // Aggiorna la UI dei giorni e degli esercizi
+    renderDayTabs();
+    loadExercisesForCurrentDay();
+}
+
+// Funzione di supporto per caricare gli esercizi del giorno nello stato visibile
+function loadExercisesForCurrentDay() {
+    resetExercisesList();
+    const currentDayExercises = workoutState.days[workoutState.currentDay] || [];
+    
+    // Rimuovi il primo campo vuoto di default se ci sono esercizi salvati
+    const list = document.getElementById('exercisesList');
+    if (currentDayExercises.length > 0) {
+        list.innerHTML = '';
+    }
+
+    currentDayExercises.forEach(ex => {
+        addExerciseField(); // Crea il campo
+        const lastItem = list.lastElementChild;
+        
+        // Popola il campo appena creato
+        lastItem.querySelector('.exercise-search').value = ex.name;
+        lastItem.querySelector('.exercise-search').setAttribute('data-selected-name', ex.name);
+        lastItem.querySelector('.exercise-image-path').value = ex.image || "";
+        lastItem.querySelector('.exercise-sets').value = ex.sets;
+        lastItem.querySelector('.exercise-reps').value = ex.reps;
+        lastItem.querySelector('.exercise-rest').value = ex.rest;
+        lastItem.querySelector('.exercise-notes').value = ex.notes || "";
+
+        // Se c'è un'immagine, mostra l'anteprima
+        if (ex.image) {
+            const preview = lastItem.querySelector('.image-preview-box');
+            preview.querySelector('.preview-img').src = ex.image;
+            preview.style.display = 'block';
+        }
+    });
 }

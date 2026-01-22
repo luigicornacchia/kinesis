@@ -97,12 +97,101 @@ h3 {
     border-color: #3CADD4;
 }
 
+/* Stili Sezione Giorni */
+.days-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+.days-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.days-header h3 {
+    margin: 0;
+    color: #3CADD4;
+}
+
+.btn-add-day {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add-day:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.btn-add-day:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.days-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.day-tab {
+    background: white;
+    border: 2px solid #e0e0e0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.day-tab:hover {
+    border-color: #3CADD4;
+    color: #3CADD4;
+}
+
+.day-tab.active {
+    background: #3CADD4;
+    border-color: #3CADD4;
+    color: white;
+}
+
+.day-tab .remove-day {
+    margin-left: 10px;
+    color: #f44336;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.day-tab.active .remove-day {
+    color: white;
+}
+
 .exercises-container {
     border: 2px dashed #e0e0e0;
     border-radius: 10px;
     padding: 20px;
     margin: 20px 0;
     background: #f9f9f9;
+}
+
+.exercises-container h3 {
+    color: #3CADD4;
+    margin-bottom: 15px;
 }
 
 .exercise-item {
@@ -686,4 +775,5 @@ select:focus {
         font-size: 1.5rem;
     }
 }
+
 

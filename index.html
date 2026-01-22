@@ -61,9 +61,20 @@
                         <input type="text" id="workoutName" placeholder="es. Allenamento Pettorali" required>
                     </div>
 
+                    <!-- Tabs per i giorni -->
+                    <div class="days-section">
+                        <div class="days-header">
+                            <h3>Giorni di Allenamento</h3>
+                            <button type="button" id="addDayBtn" class="btn-add-day">+ Aggiungi Giorno</button>
+                        </div>
+                        <div id="daysTabsContainer" class="days-tabs">
+                            <button type="button" class="day-tab active" data-day="1" onclick="switchDay(1)">Giorno 1</button>
+                        </div>
+                    </div>
+
                     <div class="exercises-container">
-                        <h3>Esercizi</h3>
-                        <div id="exercisesList">
+                        <h3 id="currentDayLabel">Esercizi - Giorno 1</h3>
+                        <div id="exercisesList" data-current-day="1">
                             <div class="exercise-item">
                                 <div class="form-group image-search-group">
                                     <label>Cerca Esercizio:</label>
@@ -187,6 +198,7 @@
     <script src="exercise-images.js"></script>
     <script src="firebase-config.js"></script>
     <script src="app-firebase.js"></script>
+    
 </body>
 </html>
 
