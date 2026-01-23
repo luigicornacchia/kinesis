@@ -56,8 +56,8 @@ function checkAuthState() {
         if (user) {
             console.log('Auth state changed, user logged in:', user.email);
             
-            // Estrai username dall'email
-            const username = user.email.split('@')[0];
+            // Estrai username dall'email e convertilo a minuscolo
+            const username = user.email.split('@')[0].toLowerCase();
             
             // Cerca utente in Firestore per username
             const usersSnapshot = await db.collection(COLLECTIONS.USERS)
@@ -84,7 +84,7 @@ function checkAuthState() {
 async function handleLogin(e) {
     e.preventDefault();
     
-    const username = document.getElementById('username').value.trim();
+    const username = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     
     console.log('Tentativo login:', username);
@@ -675,7 +675,7 @@ async function handleCreateAccount(e) {
     e.preventDefault();
     
     const name = document.getElementById('newClientName').value.trim();
-    const username = document.getElementById('newClientUsername').value.trim();
+    const username = document.getElementById('newClientUsername').value.trim().toLowerCase();
     const password = document.getElementById('newClientPassword').value;
     
     try {
