@@ -97,8 +97,8 @@ async function handleLogin(e) {
     }
     
     try {
-        // Login con Firebase Auth usando email
-        const email = `${username}@kinesis.local`;
+        // Login con Firebase Auth usando email (convertita a minuscolo)
+        const email = `${username}@kinesis.local`.toLowerCase();
         
         console.log('Tentativo auth con email:', email);
         console.log('Auth object disponibile:', !!auth);
