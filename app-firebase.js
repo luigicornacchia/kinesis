@@ -305,29 +305,34 @@ function displayWorkouts() {
             <div class="workout-content">
                 <div class="workout-body">
                     ${Object.entries(workout.days || {}).map(([day, exercises]) => `
-                        <div class="day-group">
-                            <h4 style="color: #3CADD4; margin: 15px 0 10px 0;">Giorno ${day}</h4>
-                            ${exercises.map(ex => `
-                                <div class="exercise-entry">
-                                    ${ex.image ? `
-                                        <div class="exercise-image-display">
-                                            <img src="${ex.image}" alt="${ex.name}">
+                        <div class="day-group" style="margin-bottom: 15px;">
+                            <div class="day-header" onclick="event.stopPropagation(); toggleDayExercises(this)" style="cursor: pointer; display: flex; align-items: center; padding: 12px; background-color: #f0f0f0; border-radius: 5px; user-select: none;">
+                                <span class="day-toggle-icon" style="display: inline-block; width: 20px; text-align: center; font-size: 16px; margin-right: 10px; transition: transform 0.3s;">▶</span>
+                                <h4 style="color: #3CADD4; margin: 0; flex: 1; font-size: 1rem;">Giorno ${day} (${exercises.length} esercizi)</h4>
+                            </div>
+                            <div class="day-exercises" style="display: none; padding-left: 20px; margin-top: 10px; border-left: 3px solid #3CADD4;">
+                                ${exercises.map(ex => `
+                                    <div class="exercise-entry">
+                                        ${ex.image ? `
+                                            <div class="exercise-image-display">
+                                                <img src="${ex.image}" alt="${ex.name}">
+                                            </div>
+                                        ` : ''}
+                                        <div class="exercise-info">
+                                            <strong>${ex.name}</strong>
+                                            <div class="exercise-details">
+                                                ${ex.sets}x${ex.reps}${ex.rest ? ` — Rec: ${ex.rest}s` : ''}
+                                            </div>
+                                            ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ''}
                                         </div>
-                                    ` : ''}
-                                    <div class="exercise-info">
-                                        <strong>${ex.name}</strong>
-                                        <div class="exercise-details">
-                                            ${ex.sets}x${ex.reps}${ex.rest ? ` — Rec: ${ex.rest}s` : ''}
-                                        </div>
-                                        ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ''}
                                     </div>
-                                </div>
-                            `).join('')}
+                                `).join('')}
+                            </div>
                         </div>
-                    `).join('<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">')}
+                    `).join('')}
                         <div class="workout-actions" style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button class="btn-edit" onclick="editWorkout('${workout.id}')">Modifica</button>
-                            <button class="btn-delete" onclick="deleteWorkout('${workout.id}')">Elimina</button>
+                            <button class="btn-edit" onclick="event.stopPropagation(); editWorkout('${workout.id}')">Modifica</button>
+                            <button class="btn-delete" onclick="event.stopPropagation(); deleteWorkout('${workout.id}')">Elimina</button>
                         </div>
                 </div>
             </div>
