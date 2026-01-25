@@ -737,66 +737,12 @@ select:focus {
     flex: 1;
 }
 
-.btn-toggle-view {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #3CADD4 0%, #2A8FB5 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
-    box-shadow: 0 4px 10px rgba(60, 173, 212, 0.3);
-    white-space: nowrap;
-}
-
-.btn-toggle-view:hover {
-    background: linear-gradient(135deg, #2A8FB5 0%, #1F7A9D 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(60, 173, 212, 0.4);
-}
-
-.btn-toggle-view:active {
-    transform: translateY(0);
-}
-
 /* Container schede - Layout Lista (default) */
 #workoutsContainer.workouts-list,
 #clientWorkoutsContainer.workouts-list {
     display: flex !important;
     flex-direction: column !important;
     gap: 20px !important;
-}
-
-/* Container schede - Layout Griglia */
-#workoutsContainer.workouts-grid,
-#clientWorkoutsContainer.workouts-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
-    gap: 20px !important;
-}
-
-#workoutsContainer.workouts-grid .workout-card,
-#clientWorkoutsContainer.workouts-grid .workout-card {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-}
-
-#workoutsContainer.workouts-grid .workout-card .workout-header,
-#clientWorkoutsContainer.workouts-grid .workout-card .workout-header {
-    flex-shrink: 0 !important;
-}
-
-#workoutsContainer.workouts-grid .workout-card .workout-content,
-#clientWorkoutsContainer.workouts-grid .workout-card .workout-content {
-    flex-grow: 1 !important;
-}
-
-#workoutsContainer.workouts-grid .workout-card .workout-content,
-#clientWorkoutsContainer.workouts-grid .workout-card .workout-content {
-    flex-grow: 1;
 }
 
 @media (max-width: 768px) {
