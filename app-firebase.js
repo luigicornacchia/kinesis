@@ -1150,8 +1150,12 @@ function printWorkout(workoutId) {
                 page-break-inside: avoid;
             }
         }
-        /* Responsive per schermi piccoli (migliora layout su mobile) */
-        @media (max-width: 800px) {
+        /* Forza layout a 4 colonne in modalità stampa */
+        @media print {
+            .exercises-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+        /* Responsive per schermi piccoli (migliora layout su mobile) - applica solo a schermo, non alla stampa */
+        @media screen and (max-width: 800px) {
             .print-header h1 { font-size: 20px; }
             .day-title { font-size: 16px; padding: 10px 14px; }
             .exercises-grid { grid-template-columns: repeat(1, 1fr); gap: 12px; }
