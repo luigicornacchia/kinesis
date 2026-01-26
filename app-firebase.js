@@ -333,9 +333,11 @@ function displayWorkouts() {
                         <div class="workout-actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                             <button class="btn-edit" onclick="event.stopPropagation(); editWorkout('${workout.id}')">Modifica</button>
                             <button class="btn-delete" onclick="event.stopPropagation(); deleteWorkout('${workout.id}')">Elimina</button>
-                            <button class="btn-print" onclick="event.stopPropagation(); printWorkout('${workout.id}')" style="background-color: #28a745; border: none; color: white; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; min-width: 44px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="52" height="18" viewBox="0 0 52 18" style="display:block;">
-                                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Salva</text>
+                            <button class="btn-print" title="Stampa" aria-label="Stampa" onclick="event.stopPropagation(); printWorkout('${workout.id}')" style="background:none;border:none;padding:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="6" y="9" width="12" height="8" rx="2" ry="2"></rect>
+                                    <path d="M6 16v3h12v-3"></path>
+                                    <path d="M6 9V6h12v3"></path>
                                 </svg>
                             </button>
                         </div>
@@ -676,9 +678,11 @@ function displayClientWorkouts(workoutsList) {
                     ${renderWorkoutDaysHTML(workout)}
                 </div>
                 <div class="workout-actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn-print" onclick="event.stopPropagation(); printWorkout('${workout.id}')" style="background-color: #28a745; border: none; color: white; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; min-width: 44px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="52" height="18" viewBox="0 0 52 18" style="display:block;">
-                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Salva</text>
+                    <button class="btn-print" title="Stampa" aria-label="Stampa" onclick="event.stopPropagation(); printWorkout('${workout.id}')" style="background:none;border:none;padding:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="6" y="9" width="12" height="8" rx="2" ry="2"></rect>
+                            <path d="M6 16v3h12v-3"></path>
+                            <path d="M6 9V6h12v3"></path>
                         </svg>
                     </button>
                 </div>
