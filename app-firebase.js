@@ -996,6 +996,7 @@ function printWorkout(workoutId) {
 
     // Crea una finestra di stampa
     const printWindow = window.open('', '', 'width=1000,height=800');
+    const parentBaseHref = window.location.href;
     
     // Costruisci l'HTML per la stampa
     let html = `
@@ -1004,6 +1005,7 @@ function printWorkout(workoutId) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="${parentBaseHref}">
     <title>${workout.name}</title>
     <style>
         * {
@@ -1026,9 +1028,9 @@ function printWorkout(workoutId) {
         
         .print-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             border-bottom: 3px solid #3CADD4;
-            padding-bottom: 15px;
+            padding-bottom: 8px;
         }
         
         .print-header h1 {
@@ -1038,7 +1040,7 @@ function printWorkout(workoutId) {
         }
         
         .day-section {
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             page-break-inside: avoid;
         }
         
@@ -1129,23 +1131,44 @@ function printWorkout(workoutId) {
             font-size: 14px;
         }
         
+        @page { size: A4 portrait; margin: 10mm; }
         @media print {
+            html, body { width: 190mm; }
             body {
                 padding: 10px;
+                font-size: 12pt;
+                background: #fff;
+                color: #333;
             }
-            
+
             .print-container {
                 max-width: 100%;
             }
-            
+
             .exercises-grid {
                 gap: 15px;
+                grid-template-columns: repeat(4, 1fr) !important;
             }
-            
+
             .exercise-card {
                 break-inside: avoid;
+                page-break-inside: avoid;
+                min-height: 45mm;
+                display: flex;
+                flex-direction: column;
             }
-            
+
+            .exercise-image img {
+                max-height: 40mm;
+                width: 100%;
+                height: auto;
+                object-fit: contain;
+            }
+
+            .exercise-name { font-size: 12pt; }
+            .exercise-sets-reps { font-size: 11pt; }
+            .exercise-recovery, .exercise-notes { font-size: 10pt; }
+
             .day-section {
                 page-break-inside: avoid;
             }
@@ -1167,10 +1190,6 @@ function printWorkout(workoutId) {
 </head>
 <body>
     <div class="print-container">
-        <div class="print-header">
-            <h1>${workout.name}</h1>
-            <p style="color: #666; margin-top: 5px;">Scheda di allenamento</p>
-        </div>
     `;
 
     // Aggiungi i giorni e gli esercizi
@@ -1215,6 +1234,102 @@ function printWorkout(workoutId) {
 
     html += `
     </div>
+    <script>
+    // Generazione PDF direttamente nella finestra figlia tramite html2pdf
+    (function(){
+        function imagesLoaded(parent, cb) {
+            var imgs = Array.from((parent || document).querySelectorAll('img'));
+            if (imgs.length === 0) return cb();
+            var remaining = imgs.length;
+            imgs.forEach(function(i){
+                if (i.complete) { if (--remaining === 0) cb(); }
+                else i.addEventListener('load', function(){ if (--remaining === 0) cb(); });
+                i.addEventListener('error', function(){ if (--remaining === 0) cb(); });
+            });
+        }
+
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js';
+        // create a small status box so user sees what's happening in the child window
+        function setStatus(msg) {
+            try {
+                var sbox = document.getElementById('child-pdf-status');
+                if (!sbox) {
+                    sbox = document.createElement('div');
+                    sbox.id = 'child-pdf-status';
+                    sbox.style.position = 'fixed';
+                    sbox.style.right = '12px';
+                    sbox.style.top = '12px';
+                    sbox.style.zIndex = 999999;
+                    sbox.style.background = 'rgba(0,0,0,0.8)';
+                    sbox.style.color = 'white';
+                    sbox.style.padding = '8px 12px';
+                    sbox.style.borderRadius = '6px';
+                    sbox.style.fontSize = '13px';
+                    sbox.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+                    document.body.appendChild(sbox);
+                }
+                sbox.textContent = msg;
+            } catch (e) { /* ignore */ }
+        }
+
+        var triedAlt = false;
+        s.onload = function(){
+            setStatus('Libreria PDF caricata, preparo documento...');
+            try {
+                // Aspetta che le immagini siano caricate
+                imagesLoaded(document.body, function(){
+                    setStatus('Generazione PDF...');
+                    var opt = {
+                        margin:       [10,10,10,10],
+                        filename:     (document.title || 'scheda') + '.pdf',
+                        image:        { type: 'jpeg', quality: 0.95 },
+                        html2canvas:  { scale: 2, useCORS: true, logging: false },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    var container = document.querySelector('.print-container') || document.body;
+                    try {
+                        html2pdf().from(container).set(opt).save().then(function(){
+                            setStatus('Download completato');
+                            setTimeout(function(){ try { window.close(); } catch(e){} }, 700);
+                        }).catch(function(err){
+                            console.error('Errore html2pdf.save():', err);
+                            setStatus('Errore generazione PDF');
+                            // fallback: invoca print per permettere Salva come PDF manuale
+                            setTimeout(function(){ try { window.print(); } catch(e){} }, 300);
+                        });
+                    } catch (syncErr) {
+                        console.error('Errore sincrono durante html2pdf:', syncErr);
+                        setStatus('Errore nella libreria PDF');
+                        setTimeout(function(){ try { window.print(); } catch(e){} }, 300);
+                    }
+                });
+            } catch (e) {
+                console.error('Errore durante la preparazione del PDF nella finestra figlia:', e);
+                setStatus('Errore nella preparazione del PDF');
+                setTimeout(function(){ try { window.print(); } catch(e){} }, 300);
+            }
+        };
+
+        s.onerror = function(){
+            console.error('Impossibile caricare html2pdf nella finestra figlia, prova CDN alternativo o fallback a stampa');
+            setStatus('Impossibile caricare libreria PDF (CDN)');
+            if (!triedAlt) {
+                triedAlt = true;
+                // prova CDN alternativo
+                s.src = 'https://unpkg.com/html2pdf.js@0.9.2/dist/html2pdf.bundle.min.js';
+                document.head.appendChild(s);
+                setStatus('Tentativo CDN alternativo...');
+                return;
+            }
+            // fallback: apri dialog di stampa per permettere Salva come PDF
+            setTimeout(function(){ try { window.print(); } catch(e){} }, 500);
+            alert('Impossibile generare PDF automaticamente. Usa "Salva/Esporta" dal browser (Stampa → Salva come PDF).');
+        };
+        document.head.appendChild(s);
+    })();
+    </script>
 </body>
 </html>
     `;
@@ -1222,41 +1337,7 @@ function printWorkout(workoutId) {
     printWindow.document.write(html);
     printWindow.document.close();
 
-    // Funzione di stampa robusta: onload/readyState + timeout fallback
-    function attemptPrint() {
-        try {
-            printWindow.focus();
-            printWindow.print();
-        } catch (err) {
-            console.error('Stampa non riuscita:', err);
-        }
-    }
-
-    // Se il documento è già pronto, prova subito
-    try {
-        if (printWindow.document.readyState === 'complete') {
-            attemptPrint();
-        } else {
-            // Ascolta eventi di caricamento
-            printWindow.onload = attemptPrint;
-            printWindow.document.addEventListener('readystatechange', function() {
-                if (printWindow.document.readyState === 'complete') attemptPrint();
-            });
-        }
-    } catch (e) {
-        // In alcuni browser mobile l'accesso a printWindow.document può lanciare errori
-        console.warn('Impossibile controllare readyState della finestra di stampa:', e);
-    }
-
-    // Chiudi la finestra dopo la stampa quando supportato
-    try {
-        printWindow.addEventListener('afterprint', function() {
-            try { printWindow.close(); } catch (e) { /* noop */ }
-        });
-    } catch (e) {
-        /* alcuni ambienti non supportano afterprint */
-    }
-
-    // Fallback: fornisce un tentativo supplementare dopo breve timeout (utile su Safari mobile)
-    setTimeout(attemptPrint, 900);
+    // La finestra figlia contiene lo script che genera il PDF autonomamente.
+    // Se qualcosa va storto, l'utente può usare 'Salva/Esporta' del browser dalla finestra aperta.
+    return;
 }
