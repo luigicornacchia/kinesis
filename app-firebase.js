@@ -1195,6 +1195,8 @@ async function printWorkout(workoutId) {
             .exercises-grid {
                 gap: 8px;
                 grid-template-columns: repeat(4, 1fr) !important;
+                grid-auto-rows: 32mm; /* altezza fissa per riga in stampa */
+                grid-auto-flow: row;
             }
 
             /* Riduci ulteriormente l'altezza minima e padding delle card per evitare spostamenti su pagina successiva */
@@ -1227,8 +1229,13 @@ async function printWorkout(workoutId) {
                 border-radius: 3px;
             }
 
-            .day-section {
-                page-break-inside: avoid;
+            /* Ogni giorno inizia su una nuova pagina; se troppo lungo può continuare senza ripetere il titolo */
+            .print-container .day-section {
+                page-break-before: always;
+                page-break-inside: auto;
+            }
+            .print-container .day-section:first-child {
+                page-break-before: avoid;
             }
         }
         /* Forza layout a 4 colonne in modalità stampa */
@@ -1246,7 +1253,7 @@ async function printWorkout(workoutId) {
         }
         /* Forza layout 4 colonne e larghezza fissa per la generazione PDF (override per html2canvas) */
         .print-container { width: 190mm !important; max-width: 190mm !important; }
-        .exercises-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        .exercises-grid { grid-template-columns: repeat(4, 1fr) !important; grid-auto-rows: 32mm !important; }
     </style>
 </head>
 <body>
