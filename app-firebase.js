@@ -679,7 +679,14 @@ async function loadClientWorkouts() {
         const clientWorkoutsList = workoutDocs
             .filter(doc => doc.exists)
             .map(doc => ({ id: doc.id, ...doc.data() }));
-        
+
+        // Assicuriamoci che le schede caricate per il cliente siano presenti anche nell'array globale
+        clientWorkoutsList.forEach(w => {
+            if (!workouts.find(existing => existing.id === w.id)) {
+                workouts.push(w);
+            }
+        });
+
         displayClientWorkouts(clientWorkoutsList);
         
     } catch (error) {
@@ -1013,6 +1020,7 @@ function loadExercisesForCurrentDay() {
 
 // Stampa scheda con layout a griglia 3 colonne
 async function printWorkout(workoutId) {
+    console.log('printWorkout called with id:', workoutId, 'workouts length:', workouts.length);
     let workout = workouts.find(w => w.id === workoutId);
     if (!workout) {
         // Se non è presente in memoria (es. visualizzazione client), proviamo a caricarla da Firestore
@@ -1172,8 +1180,8 @@ async function printWorkout(workoutId) {
         @media print {
             html, body { width: 190mm; }
             body {
-                padding: 10px;
-                font-size: 12pt;
+                padding: 8px;
+                font-size: 11.5pt;
                 background: #fff;
                 color: #333;
             }
@@ -1183,28 +1191,32 @@ async function printWorkout(workoutId) {
             }
 
             .exercises-grid {
-                gap: 15px;
+                gap: 12px;
                 grid-template-columns: repeat(4, 1fr) !important;
             }
 
             .exercise-card {
                 break-inside: avoid;
                 page-break-inside: avoid;
-                min-height: 40mm;
+                min-height: 36mm;
                 display: flex;
                 flex-direction: column;
             }
 
             .exercise-image img {
-                max-height: 36mm;
+                max-height: 34mm;
                 width: 100%;
                 height: auto;
                 object-fit: contain;
             }
 
+            .exercise-details { padding: 10px; }
+
             .exercise-name { font-size: 12pt; }
             .exercise-sets-reps { font-size: 11pt; }
             .exercise-recovery, .exercise-notes { font-size: 10pt; }
+
+            .day-title { padding: 8px 10px; font-size: 14px; margin-bottom: 12px; border-radius: 3px; }
 
             .day-section {
                 page-break-inside: avoid;
