@@ -1384,105 +1384,15 @@ async function printWorkout(workoutId) {
 
                     var container = document.querySelector('.print-container') || document.body;
                     try {
-                        // Detect Firefox on mobile (and fallback to blob open there)
-                        var isFirefox = /firefox/i.test(navigator.userAgent);
-                        var isMobile = /Mobi|Android/i.test(navigator.userAgent);
-                        var useBlobOpen = isFirefox && isMobile;
-
-                        var h2p = html2pdf().from(container).set(opt);
-
-                        if (useBlobOpen && h2p && h2p.toPdf) {
-                            // Generate PDF and open blob URL (Firefox mobile cannot always auto-download)
-                            h2p.toPdf().get('pdf').then(function(pdf){
-                                try {
-                                    var blob = pdf.output('blob');
-                                    var url = URL.createObjectURL(blob);
-                                    var filename = (document.title || 'scheda') + '.pdf';
-                                    // Prova a creare un link con download e cliccarlo (migliore compatibilità mobile)
-                                    try {
-                                        var file = new File([blob], filename, { type: 'application/pdf' });
-                                        var usedShare = false;
-
-                                        // Prova Web Share API con file (se disponibile)
-                                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                                            try {
-                                                usedShare = true;
-                                                navigator.share({ files: [file], title: document.title || filename }).then(function(){
-                                                    setStatus('Aperto share dialog (salva/esporta dal browser)');
-                                                }).catch(function(shareErr){
-                                                    console.warn('Share fallito:', shareErr);
-                                                    usedShare = false;
-                                                });
-                                            } catch (shareEx) {
-                                                console.warn('Errore navigator.share:', shareEx);
-                                                usedShare = false;
-                                            }
-                                        }
-
-                                        if (!usedShare) {
-                                            // Prova download diretto tramite anchor
-                                            try {
-                                                var a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = filename;
-                                                a.target = '_blank';
-                                                a.rel = 'noopener';
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                setStatus('Aperto documento PDF (salva dal browser)');
-                                                setTimeout(function(){ try { URL.revokeObjectURL(url); } catch(e){}; try { a.remove(); } catch(e){}; }, 60000);
-                                                usedShare = true;
-                                            } catch (errClick) {
-                                                console.error('Errore click su <a> download:', errClick);
-                                                // Fallback: prova data URL (meno consigliato ma funziona su alcuni WebView)
-                                                try {
-                                                    var reader = new FileReader();
-                                                    reader.onload = function(evt) {
-                                                        try {
-                                                            var dataUrl = evt.target.result;
-                                                            var a2 = document.createElement('a');
-                                                            a2.href = dataUrl;
-                                                            a2.download = filename;
-                                                            document.body.appendChild(a2);
-                                                            a2.click();
-                                                            setStatus('Aperto documento PDF (uso data: URL)');
-                                                            setTimeout(function(){ try { a2.remove(); } catch(e){}; }, 60000);
-                                                            usedShare = true;
-                                                        } catch (err2) {
-                                                            console.error('Errore click su data URL:', err2);
-                                                        }
-                                                    };
-                                                    reader.onerror = function(reErr) { console.error('FileReader error:', reErr); };
-                                                    reader.readAsDataURL(blob);
-                                                } catch (errData) {
-                                                    console.error('Errore dataURL fallback:', errData);
-                                                    // Ultima risorsa: prova ad aprire in nuova scheda
-                                                    try { window.open(url, '_blank'); setStatus('Aperto documento PDF in nuova scheda'); usedShare = true; } catch(e) { console.error('Errore apertura blob URL:', e); }
-                                                }
-                                            }
-                                        }
-                                } catch (errBlob) {
-                                    console.error('Errore generazione blob PDF:', errBlob);
-                                    // fallback al salvataggio diretto
-                                    h2p.save().then(function(){ setStatus('Download completato'); setTimeout(function(){ try { window.close(); } catch(e){} }, 700); }).catch(function(err){ console.error('Errore save fallback:', err); setStatus('Errore generazione PDF'); setTimeout(function(){ try { window.print(); } catch(e){} }, 300); });
-                                }
-                            }).catch(function(err){
-                                console.error('Errore toPdf/get(pdf):', err);
-                                // fallback alla normale save
-                                h2p.save().then(function(){ setStatus('Download completato'); setTimeout(function(){ try { window.close(); } catch(e){} }, 700); }).catch(function(err2){ console.error('Errore save fallback:', err2); setStatus('Errore generazione PDF'); setTimeout(function(){ try { window.print(); } catch(e){} }, 300); });
-                            });
-                        } else {
-                            // Comportamento predefinito: salva automaticamente
-                            h2p.save().then(function(){
-                                setStatus('Download completato');
-                                setTimeout(function(){ try { window.close(); } catch(e){} }, 700);
-                            }).catch(function(err){
-                                console.error('Errore html2pdf.save():', err);
-                                setStatus('Errore generazione PDF');
-                                // fallback: invoca print per permettere Salva come PDF manuale
-                                setTimeout(function(){ try { window.print(); } catch(e){} }, 300);
-                            });
-                        }
+                        html2pdf().from(container).set(opt).save().then(function(){
+                            setStatus('Download completato');
+                            setTimeout(function(){ try { window.close(); } catch(e){} }, 700);
+                        }).catch(function(err){
+                            console.error('Errore html2pdf.save():', err);
+                            setStatus('Errore generazione PDF');
+                            // fallback: invoca print per permettere Salva come PDF manuale
+                            setTimeout(function(){ try { window.print(); } catch(e){} }, 300);
+                        });
                     } catch (syncErr) {
                         console.error('Errore sincrono durante html2pdf:', syncErr);
                         setStatus('Errore nella libreria PDF');
