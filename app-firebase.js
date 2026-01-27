@@ -1195,9 +1195,13 @@ async function printWorkout(workoutId) {
             .exercises-grid {
                 gap: 8px;
                 grid-template-columns: repeat(4, 1fr) !important;
-                grid-auto-rows: 32mm; /* altezza fissa per riga in stampa */
+                grid-auto-rows: 85mm; /* altezza fissa per riga in stampa (3 righe per pagina) */
                 grid-auto-flow: row;
             }
+
+            /* Page box: dimensioni A4 interne (@page margins 10mm => 297 - 20 = 277mm) */
+            .page { width: 190mm !important; height: 277mm !important; box-sizing: border-box; page-break-after: always; }
+            .page .exercises-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; grid-auto-rows: 85mm; height: calc(85mm * 3); }
 
             /* Riduci ulteriormente l'altezza minima e padding delle card per evitare spostamenti su pagina successiva */
             .print-container .exercise-card {
@@ -1248,25 +1252,31 @@ async function printWorkout(workoutId) {
         }
         /* Forza layout 4 colonne e larghezza fissa per la generazione PDF (override per html2canvas) */
         .print-container { width: 190mm !important; max-width: 190mm !important; }
-        .exercises-grid { grid-template-columns: repeat(4, 1fr) !important; grid-auto-rows: 32mm !important; }
+        .exercises-grid { grid-template-columns: repeat(4, 1fr) !important; grid-auto-rows: 85mm !important; }
     </style>
 </head>
 <body>
     <div class="print-container">
     `;
 
-    // Aggiungi i giorni e gli esercizi
+    // Aggiungi i giorni e gli esercizi paginati: 4 colonne x 3 righe per pagina (12 esercizi)
     if (workout.days && Object.keys(workout.days).length > 0) {
         Object.entries(workout.days).forEach(([day, exercises]) => {
-            html += `
-        <div class="day-section">
-            <div class="day-title">Giorno ${day}</div>
-            <div class="exercises-grid">
+            const pageSize = 12;
+            for (let i = 0; i < exercises.length; i += pageSize) {
+                const chunk = exercises.slice(i, i + pageSize);
+                // Per la prima pagina del giorno mostriamo il titolo; per le successive no
+                const showTitle = (i === 0);
+
+                html += `
+        <div class="page">
+            ${showTitle ? `<div class="day-title">Giorno ${day}</div>` : '<div class="day-title" style="visibility:hidden;height:12mm;margin-bottom:8px"></div>'}
+            <div class="exercises-grid" data-page-index="${i / pageSize}">
             `;
-            
-            if (exercises && exercises.length > 0) {
-                exercises.forEach(ex => {
-                    html += `
+
+                if (chunk && chunk.length > 0) {
+                    chunk.forEach(ex => {
+                        html += `
                 <div class="exercise-card">
                     ${ex.image ? `
                     <div class="exercise-image">
@@ -1280,16 +1290,21 @@ async function printWorkout(workoutId) {
                         ${ex.notes ? `<div class="exercise-notes">${ex.notes}</div>` : ''}
                     </div>
                 </div>
-                    `;
-                });
-            } else {
-                html += '<div class="no-exercises">Nessun esercizio per questo giorno</div>';
-            }
-            
-            html += `
+                        `;
+                    });
+                } else {
+                    html += '<div class="no-exercises">Nessun esercizio per questo giorno</div>';
+                }
+
+                html += `
             </div>
         </div>
-            `;
+                `;
+            }
+            // Se il giorno non ha esercizi, mostriamo comunque un blocco vuoto
+            if (!exercises || exercises.length === 0) {
+                html += '<div class="page"><div class="day-title">Giorno '+day+'</div><div class="no-exercises">Nessun esercizio per questo giorno</div></div>';
+            }
         });
     } else {
         html += '<p class="no-exercises">Nessun esercizio presente nella scheda.</p>';
