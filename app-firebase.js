@@ -1012,11 +1012,23 @@ function loadExercisesForCurrentDay() {
 }
 
 // Stampa scheda con layout a griglia 3 colonne
-function printWorkout(workoutId) {
-    const workout = workouts.find(w => w.id === workoutId);
+async function printWorkout(workoutId) {
+    let workout = workouts.find(w => w.id === workoutId);
     if (!workout) {
-        alert('Scheda non trovata!');
-        return;
+        // Se non è presente in memoria (es. visualizzazione client), proviamo a caricarla da Firestore
+        try {
+            const doc = await db.collection(COLLECTIONS.WORKOUTS).doc(workoutId).get();
+            if (doc.exists) {
+                workout = { id: doc.id, ...doc.data() };
+            } else {
+                alert('Scheda non trovata!');
+                return;
+            }
+        } catch (err) {
+            console.error('Errore recupero scheda:', err);
+            alert('Errore nel recupero della scheda. Riprova.');
+            return;
+        }
     }
 
     // Crea una finestra di stampa
@@ -1178,13 +1190,13 @@ function printWorkout(workoutId) {
             .exercise-card {
                 break-inside: avoid;
                 page-break-inside: avoid;
-                min-height: 45mm;
+                min-height: 40mm;
                 display: flex;
                 flex-direction: column;
             }
 
             .exercise-image img {
-                max-height: 40mm;
+                max-height: 36mm;
                 width: 100%;
                 height: auto;
                 object-fit: contain;
