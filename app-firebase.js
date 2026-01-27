@@ -1178,45 +1178,54 @@ async function printWorkout(workoutId) {
         
         @page { size: A4 portrait; margin: 10mm; }
         @media print {
-            html, body { width: 190mm; }
+            html, body { width: 185mm; }
             body {
-                padding: 8px;
-                font-size: 11.5pt;
+                padding: 6px;
+                font-size: 11pt;
                 background: #fff;
                 color: #333;
             }
 
             .print-container {
                 max-width: 100%;
+                width: 185mm !important;
             }
 
+            /* Riduci gap e usa 4 colonne per sfruttare meglio lo spazio verticale */
             .exercises-grid {
-                gap: 12px;
+                gap: 8px;
                 grid-template-columns: repeat(4, 1fr) !important;
             }
 
-            .exercise-card {
+            /* Riduci ulteriormente l'altezza minima e padding delle card per evitare spostamenti su pagina successiva */
+            .print-container .exercise-card {
                 break-inside: avoid;
                 page-break-inside: avoid;
-                min-height: 36mm;
+                min-height: 30mm;
                 display: flex;
                 flex-direction: column;
+                overflow: hidden;
             }
 
-            .exercise-image img {
-                max-height: 34mm;
+            .print-container .exercise-image img {
+                max-height: 30mm;
                 width: 100%;
                 height: auto;
                 object-fit: contain;
             }
 
-            .exercise-details { padding: 10px; }
+            .print-container .exercise-details { padding: 6px; }
 
-            .exercise-name { font-size: 12pt; }
-            .exercise-sets-reps { font-size: 11pt; }
-            .exercise-recovery, .exercise-notes { font-size: 10pt; }
+            .print-container .exercise-name { font-size: 11.5pt; }
+            .print-container .exercise-sets-reps { font-size: 10.5pt; }
+            .print-container .exercise-recovery, .print-container .exercise-notes { font-size: 9.5pt; }
 
-            .day-title { padding: 8px 10px; font-size: 14px; margin-bottom: 12px; border-radius: 3px; }
+            .print-container .day-title {
+                padding: 6px 8px;
+                font-size: 13px;
+                margin-bottom: 8px;
+                border-radius: 3px;
+            }
 
             .day-section {
                 page-break-inside: avoid;
